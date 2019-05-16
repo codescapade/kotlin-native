@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.konan.file.isBitcode
 import org.jetbrains.kotlin.konan.library.KonanLibraryVersioning
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.Family
+import org.jetbrains.kotlin.konan.target.isAppleTarget
 
 val CompilerOutputKind.isNativeBinary: Boolean get() = when (this) {
     CompilerOutputKind.PROGRAM, CompilerOutputKind.DYNAMIC,
@@ -45,7 +46,7 @@ private fun linkAllDependecies(context: Context, generatedBitcodeFiles: List<Str
 }
 
 private fun shouldOptimizeWithLlvmApi(context: Context) =
-        (context.config.target.family == Family.IOS || context.config.target.family == Family.OSX)
+        context.config.target.isAppleTarget
 
 private fun shoudRunClosedWorldCleanUp(context: Context) =
         // GlobalDCE will kill coverage-related globals.

@@ -15,7 +15,7 @@ typealias ObjectFile = String
 typealias ExecutableFile = String
 
 private fun mangleSymbol(target: KonanTarget,symbol: String) =
-        if (target.family == Family.IOS || target.family == Family.OSX) {
+        if (target.isAppleTarget) {
             "_$symbol"
         } else {
             symbol

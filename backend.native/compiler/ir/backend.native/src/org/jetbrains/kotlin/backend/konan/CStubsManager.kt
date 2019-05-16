@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.konan.file.*
 import org.jetbrains.kotlin.konan.target.ClangArgs
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.isAppleTarget
 
 class CStubsManager(private val target: KonanTarget) {
 
@@ -21,8 +22,8 @@ class CStubsManager(private val target: KonanTarget) {
         if (stubs.isEmpty()) return null
 
         val compilerOptions = mutableListOf<String>()
-        val sourceFileExtension = when (target.family) {
-            Family.OSX, Family.IOS -> {
+        val sourceFileExtension = when {
+            target.isAppleTarget -> {
                 compilerOptions += "-fobjc-arc"
                 ".m" // TODO: consider managing C and Objective-C stubs separately.
             }

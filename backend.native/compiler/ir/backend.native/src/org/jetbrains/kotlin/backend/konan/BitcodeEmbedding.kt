@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.backend.konan
 import org.jetbrains.kotlin.backend.konan.llvm.Int8
 import org.jetbrains.kotlin.backend.konan.llvm.Llvm
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.konan.target.Family
 
 object BitcodeEmbedding {
 
@@ -22,26 +23,17 @@ object BitcodeEmbedding {
         BitcodeEmbedding.Mode.FULL -> listOf("-fembed-bitcode=all")
     }
 
-    private val KonanConfig.bitcodeEmbeddingMode get() = configuration.get(KonanConfigKeys.BITCODE_EMBEDDING_MODE)!!.also {
-        require(it == Mode.NONE || this.produce == CompilerOutputKind.FRAMEWORK) {
-            "${it.name.toLowerCase()} bitcode embedding mode is not supported when producing ${this.produce.name.toLowerCase()}"
-        }
-    }
+    private fun KonanConfig.shouldForceBitcodeEmbedding() =
+            target.family == Family.TVOS
 
-    internal fun processModule(llvm: Llvm) = when (llvm.context.config.bitcodeEmbeddingMode) {
-        Mode.NONE -> {}
-        Mode.MARKER -> {
-            addEmptyMarker(llvm, "konan_llvm_bitcode", "__LLVM,__bitcode")
-            addEmptyMarker(llvm, "konan_llvm_cmdline", "__LLVM,__cmdline")
+    private val KonanConfig.bitcodeEmbeddingMode: Mode
+        get() = if (shouldForceBitcodeEmbedding()) {
+            if (debug) Mode.MARKER else Mode.FULL
+        } else {
+            configuration.get(KonanConfigKeys.BITCODE_EMBEDDING_MODE)!!
+        }.also {
+            require(it == Mode.NONE || this.produce == CompilerOutputKind.FRAMEWORK) {
+                "${it.name.toLowerCase()} bitcode embedding mode is not supported when producing ${this.produce.name.toLowerCase()}"
+            }
         }
-        Mode.FULL -> {
-            addEmptyMarker(llvm, "konan_llvm_asm", "__LLVM,__asm")
-        }
-    }
-
-    private fun addEmptyMarker(llvm: Llvm, name: String, section: String) {
-        val global = llvm.staticData.placeGlobal(name, Int8(0), isExported = false)
-        global.setSection(section)
-        llvm.usedGlobals += global.llvmGlobal
-    }
 }
